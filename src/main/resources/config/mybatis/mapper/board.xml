@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="b">
+<!-- mapper : DB에 쿼리문을 요청하고 결과를 돌려받는 속성파일 -->
+<!-- 세미콜론 (;)을 절대 쓰지 않는다! 
++ select타입에는 항상 resultType을 작성해주어야 함!-->
+
+<select id="board_list2" resultType="board">
+	select * from board order by ref desc, step
+</select>
+
+<select id="board_list" resultType="board" parameterType="java.util.HashMap">
+	select * from (select rank() over(order by ref desc,step) no, b.* 
+		from board b)
+		where no between #{start} and #{end}
+</select>
+<!-- 전체 게시물 개수 조회 -->
+<select id="board_count" resultType="_int">
+	SELECT COUNT(*) FROM board
+</select>
+
+<!-- idx number(3) primary key,
+	name varchar2(100),
+	subject varchar2(255),
+	content clob,
+	pwd varchar2(100), 
+	ip varchar2(100),
+	regdate date,
+	readhit number(3) default 0,
+	ref number(3),
+	step number(3), 
+	depth number(3) 
+	del_info number(2) 추가 = > 추가했으니 sql문 수정 필요
+	-->
+	<!-- 새글 쓰기 ( 댓글 아님 ) -->
+	<!-- insert,update,delete에서는 resultType 설정불가능 : 자동으로 정수형으로 지정된다. -->
+<insert id="board_insert" parameterType="board">
+	insert into board values
+	(
+	seq_board_idx.nextval,
+	#{name},
+	#{subject},
+	#{content},
+	#{pwd},
+	#{ip},
+	sysdate,
+	0,
+	seq_board_idx.currval,
+	0,
+	0,
+	0
+	)
+</insert>
+
+<select id="board_one" resultType="board" parameterType="_int">
+	SELECT * FROM BOARD WHERE IDX = #{idx}
+</select>
+
+<update id="update_readhit" parameterType="_int">
+	UPDATE BOARD
+	SET	readhit = readhit + 1
+	WHERE idx = #{idx}
+</update>
+
+<!-- 댓글 작성을 위한 Step을 증가 시키기 -->
+<update id="board_update_step" parameterType="board">
+	 UPDATE BOARD
+	 SET step = step + 1
+	 WHERE ref = #{ref} AND step > #{step}
+</update>
+
+<insert id="board_reply" parameterType="board">
+	INSERT INTO BOARD VALUES
+	(
+	seq_board_idx.nextval,
+	#{name},
+	#{subject},
+	#{content},
+	#{pwd},
+	#{ip},
+	sysdate,
+	0,
+	#{ref},
+	#{step},
+	#{depth},
+	0
+	)
+</insert>
+
+<update id="del_update" parameterType="board">
+	UPDATE BOARD
+	SET subject = #{subject}, name = #{name} ,del_info = -1
+	WHERE idx = #{idx}
+</update>
+
+
+
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
